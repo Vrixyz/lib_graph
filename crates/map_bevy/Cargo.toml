@@ -1,0 +1,15 @@
+[package]
+name = "map_bevy"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["rlib"]
+name = "map_bevy"
+
+[dependencies]
+bevy = "0.5"
+
+shapes = { path = "../shapes" }
+map = { path = "../map" }
