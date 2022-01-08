@@ -155,11 +155,10 @@ mod map_builder {
         mut commands: Commands,
         q_selected_rooms: Query<(Entity, &Selectable), With<RoomEntity>>,
     ) {
-        /*
         for (e, s) in q_selected_rooms.iter() {
             if s.is_selected {
                 commands.entity(e).despawn();
             }
-        }*/
+        }
     }
 }
