@@ -18,7 +18,7 @@ impl Plugin for MapPlugin {
             .add_system(ui_menu.system())
             .add_system(game_menu.system());*/
 
-        app.add_system(update_map_display.system());
+        app.add_system_to_stage(CoreStage::PreUpdate, update_map_display.system());
     }
 }
 
@@ -92,7 +92,6 @@ fn update_map_display(
         }
         for r in to_remove {
             display.remove(r);
-            map.0.remove(r);
         }
     }
 }

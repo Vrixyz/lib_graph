@@ -864,7 +864,6 @@ name = "camera_pan"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "input",
 ]
 
 [[package]]

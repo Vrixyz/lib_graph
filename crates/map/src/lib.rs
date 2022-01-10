@@ -28,7 +28,7 @@ pub enum ErrorAdd {
     NoPlaceFound(RoomId),
 }
 
-impl<T: Sized> Map<T> {
+impl<T: Sized + std::fmt::Debug> Map<T> {
     pub fn add(
         &mut self,
         from: RoomId,

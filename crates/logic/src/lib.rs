@@ -64,7 +64,7 @@ fn setup_camera(mut commands: Commands, mut camera_pan: ResMut<CameraPan>) {
 }
 
 mod map_builder {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, time::Duration};
 
     use bevy::prelude::*;
     use map::{Room, RoomId};
@@ -85,9 +85,9 @@ mod map_builder {
 
     pub fn setup(app: &mut AppBuilder) {
         app.add_startup_system(setup_map.system());
-        app.add_system(update_map.system());
+        //app.add_system(update_map.system());
         app.add_system(make_rooms_selectable.system());
-        app.add_system(destroy_selected_rooms.system());
+        app.add_system(expand_selected_rooms.system());
     }
 
     fn setup_map(mut commands: Commands, mut random: ResMut<RandomDeterministic>) {
@@ -103,10 +103,24 @@ mod map_builder {
 
     fn update_map(
         mut commands: Commands,
+        mut timer: Local<Timer>,
+        time: Res<Time>,
         mut random: ResMut<RandomDeterministic>,
         mut maps: Query<(&mut Map, &mut MapBuilder)>,
     ) {
+        if timer.duration() == Duration::default() {
+            timer.set_duration(Duration::from_millis(50));
+            timer.reset();
+        }
+        timer.tick(time.delta());
+        if !timer.just_finished() {
+            return;
+        }
+        timer.reset();
         for (mut map, mut builder) in maps.iter_mut() {
+            if map.0.len() >= 20 {
+                continue;
+            }
             for _ in 0..15 {
                 let mut filtered_rooms: Vec<(&RoomId, &Room<i32>)> = map
                     .0
@@ -121,14 +135,26 @@ mod map_builder {
                     filtered_rooms = map.0.iter().collect();
                     dbg!("no safe room left");
                 }
+                if filtered_rooms.is_empty() {
+                    dbg!("no rooms left at all");
+                    map.0.create_raw(
+                        0,
+                        (
+                            random.random.gen_range(-1f32..=1f32) * 30f32,
+                            random.random.gen_range(-1f32..=1f32) * 30f32,
+                        ),
+                        vec![],
+                    );
+                    break;
+                }
                 let random_index = random.random.gen_range(0..filtered_rooms.len());
 
-                let (room_id, _) = filtered_rooms[random_index];
-                let room_id = *room_id;
-                if map.0.add(room_id, 1, &mut random.random, 15).is_err() {
+                let (from_room, _) = filtered_rooms[random_index];
+                let from_room = *from_room;
+                if map.0.add(from_room, 1, &mut random.random, 15).is_err() {
                     builder
                         .clutters
-                        .entry(room_id)
+                        .entry(from_room)
                         .or_insert_with(RoomClutter::default)
                         .nb_gen_tries += 1;
                 } else {
@@ -144,22 +170,47 @@ mod map_builder {
     ) {
         for e in q_new_rooms.iter() {
             let room_size = 30f32;
-            let margin = 10f32;
+            let margin = 100f32;
             commands
                 .entity(e)
-                .insert(Selectable::new(room_size + margin, false));
+                .insert(Selectable::new(room_size + margin, false, false));
         }
     }
 
     fn destroy_selected_rooms(
         mut commands: Commands,
-        q_selected_rooms: Query<(Entity, &Selectable), With<RoomEntity>>,
+        q_selected_rooms: Query<(Entity, &RoomEntity, &Selectable), With<RoomEntity>>,
+        mut maps: Query<&mut Map>,
     ) {
-        /*
-        for (e, s) in q_selected_rooms.iter() {
-            if s.is_selected {
+        for (e, id, s) in q_selected_rooms.iter() {
+            if s.is_hover {
+                for mut m in maps.iter_mut() {
+                    if m.0.len() <= 1 {
+                        return;
+                    }
+                    m.0.remove(id.room_id);
+                }
                 commands.entity(e).despawn();
             }
-        }*/
+        }
+    }
+    fn expand_selected_rooms(
+        mut commands: Commands,
+        mut random: ResMut<RandomDeterministic>,
+        mut q_selected_rooms: Query<(Entity, &RoomEntity, &mut Selectable), With<RoomEntity>>,
+        mut maps: Query<(&mut Map, &mut MapBuilder)>,
+    ) {
+        for (e, id, s) in q_selected_rooms.iter_mut() {
+            if s.is_hover {
+                let from_room = id.room_id;
+                for (mut map, mut builder) in maps.iter_mut() {
+                    for _ in 0..2 {
+                        if map.0.add(from_room, 1, &mut random.random, 15).is_ok() {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

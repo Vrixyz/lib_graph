@@ -10,4 +10,3 @@ name = "camera_pan"
 
 [dependencies]
 bevy = "0.5"
-input = { path = "../input" }

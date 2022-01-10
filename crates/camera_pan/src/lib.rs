@@ -1,11 +1,9 @@
 use bevy::prelude::*;
-use input::InputPlugin;
 
 pub struct CameraPanPlugin;
 
 impl Plugin for CameraPanPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_plugin(InputPlugin);
         app.insert_resource(CameraPan {
             camera: None,
             ..Default::default()
@@ -21,26 +19,24 @@ pub struct CameraPan {
 }
 
 mod systems {
-    use bevy::{
-        app::Events, input::mouse::MouseWheel, input::Input, math::Vec3, prelude::*,
-        render::camera::CameraProjection, render::camera::OrthographicProjection,
-    };
-    use input::UserInputs;
+    use bevy::{input::mouse::MouseMotion, input::mouse::MouseWheel, math::Vec3, prelude::*};
 
     use super::CameraPan;
 
     pub fn camera_pan(
-        mut camera_pan: ResMut<CameraPan>,
-        user_inputs: Res<UserInputs>,
+        camera_pan: Res<CameraPan>,
+        mouse_button_input: Res<Input<MouseButton>>,
+        mut mouse_motion: EventReader<MouseMotion>,
         mut query: Query<&mut Transform>,
     ) {
-        if let Some(input::UserInput::Drag(click)) = &user_inputs.click {
-            if camera_pan.camera.is_some() {
-                let mut camera = query
-                    .get_component_mut::<Transform>(camera_pan.camera.unwrap())
-                    .unwrap();
-                let offset = click.new_click - click.previous_click;
-                camera.translation -= Vec3::new(offset.x, offset.y, 0.0);
+        if mouse_button_input.pressed(MouseButton::Left) {
+            if let Some(offset) = mouse_motion.iter().last() {
+                if camera_pan.camera.is_some() {
+                    let mut camera = query
+                        .get_component_mut::<Transform>(camera_pan.camera.unwrap())
+                        .unwrap();
+                    camera.translation -= Vec3::new(offset.delta.x, -offset.delta.y, 0.0);
+                }
             }
         }
     }
