@@ -1,11 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use map::{Room, RoomId};
 use shapes::*;
 
 pub struct MapPlugin;
 
 impl Plugin for MapPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPlugins);
         app.add_plugin(ShapesPlugin);
         /*
@@ -18,47 +18,37 @@ impl Plugin for MapPlugin {
             .add_system(ui_menu.system())
             .add_system(game_menu.system());*/
 
-        app.add_system_to_stage(CoreStage::PreUpdate, update_map_display.system());
+        app.add_system_to_stage(CoreStage::PreUpdate, update_map_display);
     }
 }
 
-// Component
-#[derive(Default)]
+#[derive(Default, Component)]
 pub struct Map(pub map::Map<i32>);
 
-// Component
-#[derive(Default)]
+#[derive(Default, Component)]
 pub struct DisplayMap {
     pub entities: Vec<Entity>,
     pub ids: Vec<RoomId>,
 }
 
-// Component
+#[derive(Component)]
 pub struct RoomEntity {
     pub room_id: map::RoomId,
 }
 
 pub struct RoomGraphUpdate {
-    pub mesh_bundle: MeshBundle,
-    pub material: Handle<shapes::ColorMaterial>,
+    pub mesh_bundle: MaterialMesh2dBundle<shapes::ColorMaterial>,
 }
 fn create_room_bundle(shapes: &Res<ShapeMeshes>, pos: (f32, f32)) -> RoomGraphUpdate {
-    let material = shapes.mat_green.clone();
-
     let mut transform = Transform::from_xyz(pos.0, pos.1, 10.0);
     transform.scale = Vec3::ONE * 15.0;
-    let mesh = MeshBundle {
-        mesh: shapes.quad2x2.clone(),
-        render_pipelines: RenderPipelines::from_pipelines(vec![
-            bevy::render::pipeline::RenderPipeline::new(shapes.pipeline_circle.clone()),
-        ]),
+    let mesh = MaterialMesh2dBundle {
+        mesh: shapes.quad2x2.clone().into(),
+        material: shapes.mat_green.clone(),
         transform,
         ..Default::default()
     };
-    RoomGraphUpdate {
-        material,
-        mesh_bundle: mesh,
-    }
+    RoomGraphUpdate { mesh_bundle: mesh }
 }
 
 fn update_map_display(
@@ -88,7 +78,6 @@ fn update_map_display(
             commands
                 .entity(entity)
                 .insert_bundle(graphic_update.mesh_bundle);
-            commands.entity(entity).insert(graphic_update.material);
         }
         for r in to_remove {
             display.remove(r);

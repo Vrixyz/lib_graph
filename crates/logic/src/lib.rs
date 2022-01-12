@@ -1,5 +1,6 @@
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    ecs::component::TableStorage,
     prelude::*,
 };
 use camera_pan::{CameraPan, CameraPanPlugin};
@@ -8,19 +9,17 @@ use map_bevy::{DisplayMap, Map, MapPlugin};
 use rand::{thread_rng, Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use selection::SelectionPlugin;
-use wasm_bindgen::prelude::wasm_bindgen;
 
-#[wasm_bindgen]
 pub fn run() {
-    App::build().add_plugin(LogicPlugin).run();
+    App::new().add_plugin(LogicPlugin).run();
 }
 
 struct LogicPlugin;
 
 impl Plugin for LogicPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_plugin(LogDiagnosticsPlugin::default())
-            .add_plugin(FrameTimeDiagnosticsPlugin::default());
+    fn build(&self, app: &mut App) {
+        /*app.add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default());*/
 
         app.add_plugin(MapPlugin);
         app.add_plugin(CameraPanPlugin);
@@ -28,7 +27,7 @@ impl Plugin for LogicPlugin {
 
         app.insert_resource(RandomDeterministic::default());
 
-        app.add_startup_system(setup_camera.system());
+        app.add_startup_system(setup_camera);
         map_builder::setup(app);
     }
 }
@@ -51,8 +50,15 @@ impl Default for RandomDeterministic {
 
 struct MainCamera;
 
+impl Component for MainCamera {
+    type Storage = TableStorage;
+}
+
 fn setup_camera(mut commands: Commands, mut camera_pan: ResMut<CameraPan>) {
-    // TODO: camera logic into its own plugin
+    /*let cameraBundle = PerspectiveCameraBundle {
+        transform: Transform::from_xyz(0.0, 0.0, -100.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..Default::default()
+    };*/
     let mut cameraBundle = OrthographicCameraBundle::new_2d();
     cameraBundle.orthographic_projection.scale = 0.3;
     let entity = commands
@@ -66,7 +72,7 @@ fn setup_camera(mut commands: Commands, mut camera_pan: ResMut<CameraPan>) {
 mod map_builder {
     use std::{collections::HashMap, time::Duration};
 
-    use bevy::prelude::*;
+    use bevy::{ecs::component::TableStorage, prelude::*};
     use map::{Room, RoomId};
     use map_bevy::{DisplayMap, Map, RoomEntity};
     use rand::Rng;
@@ -82,12 +88,15 @@ mod map_builder {
     struct MapBuilder {
         pub clutters: HashMap<RoomId, RoomClutter>,
     }
+    impl Component for MapBuilder {
+        type Storage = TableStorage;
+    }
 
-    pub fn setup(app: &mut AppBuilder) {
-        app.add_startup_system(setup_map.system());
-        //app.add_system(update_map.system());
-        app.add_system(make_rooms_selectable.system());
-        app.add_system(expand_selected_rooms.system());
+    pub fn setup(app: &mut App) {
+        app.add_startup_system(setup_map);
+        //app.add_system(update_map);
+        app.add_system(make_rooms_selectable);
+        app.add_system(expand_selected_rooms);
     }
 
     fn setup_map(mut commands: Commands, mut random: ResMut<RandomDeterministic>) {
@@ -119,9 +128,9 @@ mod map_builder {
         timer.reset();
         for (mut map, mut builder) in maps.iter_mut() {
             if map.0.len() >= 20 {
-                continue;
+                //continue;
             }
-            for _ in 0..15 {
+            for _ in 0..5 {
                 let mut filtered_rooms: Vec<(&RoomId, &Room<i32>)> = map
                     .0
                     .iter()
@@ -151,7 +160,7 @@ mod map_builder {
 
                 let (from_room, _) = filtered_rooms[random_index];
                 let from_room = *from_room;
-                if map.0.add(from_room, 1, &mut random.random, 15).is_err() {
+                if map.0.add(from_room, 1, &mut random.random, 10).is_err() {
                     builder
                         .clutters
                         .entry(from_room)

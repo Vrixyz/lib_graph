@@ -9,8 +9,8 @@ crate-type = ["cdylib", "rlib"]
 name = "logic"
 
 [dependencies]
-bevy_egui = "0.7"
-wasm-bindgen = "0.2"
+# bevy_egui = "0.9"
+# wasm-bindgen = "0.2.76"
 rand = { version = "0.8.4", features = ["small_rng"] }
 rand_chacha = "0.3.1"
 camera_pan = { path = "../camera_pan" }
@@ -21,8 +21,7 @@ selection = { path = "../selection" }
 
 # Dependencies for native only.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-bevy = { version = "0.5", default-features = false, features = [
-    "bevy_wgpu",
+bevy = { version = "0.6", default-features = false, features = [
     "bevy_winit",
     "render",
     "x11",
@@ -30,9 +29,9 @@ bevy = { version = "0.5", default-features = false, features = [
 
 # Dependencies for WASM only.
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-bevy = { version = "0.5", default-features = false, features = [
+bevy = { version = "0.6", default-features = false, features = [
     "bevy_winit",
     "render",
 ] }
-bevy_webgl2 = "0.5"
+# bevy_webgl2 = "0.5"
 console_error_panic_hook = "*"

@@ -3,17 +3,17 @@ use bevy::prelude::*;
 pub struct CameraPanPlugin;
 
 impl Plugin for CameraPanPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(CameraPan {
             camera: None,
             ..Default::default()
         });
-        app.add_system(systems::camera_pan.system())
-            .add_system(systems::camera_zoom.system());
+        app.add_system(systems::camera_pan)
+            .add_system(systems::camera_zoom);
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Component)]
 pub struct CameraPan {
     pub camera: Option<Entity>,
 }

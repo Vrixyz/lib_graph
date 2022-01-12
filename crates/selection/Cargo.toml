@@ -9,5 +9,5 @@ crate-type = ["rlib"]
 name = "selection"
 
 [dependencies]
-bevy = "0.5"
+bevy = "0.6"
 input = { path = "../input" }

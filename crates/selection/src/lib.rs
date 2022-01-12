@@ -4,12 +4,13 @@ use input::{InputPlugin, UserInputs};
 pub struct SelectionPlugin;
 
 impl Plugin for SelectionPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_plugin(InputPlugin);
-        app.add_system(selection.system());
+        app.add_system(selection);
     }
 }
 
+#[derive(Component)]
 pub struct Selectable {
     pub size: f32,
     pub is_selected: bool,

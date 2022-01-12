@@ -4,12 +4,13 @@ use bevy::render::camera::OrthographicProjection;
 pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
-    fn build(&self, app: &mut AppBuilder) {
-        app.add_system(base_input.system());
+    fn build(&self, app: &mut App) {
+        app.add_system(base_input);
         app.insert_resource(UserInputs::default());
     }
 }
 
+#[derive(Component)]
 pub struct InputCamera;
 
 #[derive(Default)]
@@ -24,7 +25,10 @@ fn base_input(
 ) {
     let win = window.get_primary().expect("no primary window");
     if let Some(pos) = win.cursor_position() {
-        let (camera_transform, projection) = q_camera.iter().next().unwrap();
+        let (camera_transform, projection) = match q_camera.iter().next() {
+            Some(it) => it,
+            None => return,
+        };
         let size = Vec2::new(win.width() as f32, win.height() as f32);
 
         // the default orthographic projection is in pixels from the center;

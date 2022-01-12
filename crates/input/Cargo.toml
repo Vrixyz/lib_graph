@@ -9,4 +9,4 @@ crate-type = ["rlib"]
 name = "input"
 
 [dependencies]
-bevy = "0.5"
+bevy = "0.6"

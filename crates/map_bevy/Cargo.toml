@@ -9,7 +9,7 @@ crate-type = ["rlib"]
 name = "map_bevy"
 
 [dependencies]
-bevy = "0.5"
+bevy = "0.6"
 
 shapes = { path = "../shapes" }
 map = { path = "../map" }
