@@ -1,3 +1,5 @@
+mod movement;
+
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     ecs::component::TableStorage,
@@ -6,6 +8,7 @@ use bevy::{
 use camera_pan::{CameraPan, CameraPanPlugin};
 use input::InputCamera;
 use map_bevy::{DisplayMap, Map, MapPlugin};
+use movement::MovementPlugin;
 use rand::{thread_rng, Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use selection::SelectionPlugin;
@@ -24,6 +27,7 @@ impl Plugin for LogicPlugin {
         app.add_plugin(MapPlugin);
         app.add_plugin(CameraPanPlugin);
         app.add_plugin(SelectionPlugin);
+        app.add_plugin(MovementPlugin);
 
         app.insert_resource(RandomDeterministic::default());
 
@@ -69,7 +73,7 @@ fn setup_camera(mut commands: Commands, mut camera_pan: ResMut<CameraPan>) {
     camera_pan.camera = Some(entity);
 }
 
-mod map_builder {
+pub mod map_builder {
     use std::{collections::HashMap, time::Duration};
 
     use bevy::{ecs::component::TableStorage, prelude::*};
@@ -85,8 +89,8 @@ mod map_builder {
         pub nb_gen_tries: u8,
     }
     #[derive(Default)]
-    struct MapBuilder {
-        pub clutters: HashMap<RoomId, RoomClutter>,
+    pub struct MapBuilder {
+        pub(self) clutters: HashMap<RoomId, RoomClutter>,
     }
     impl Component for MapBuilder {
         type Storage = TableStorage;
@@ -94,9 +98,9 @@ mod map_builder {
 
     pub fn setup(app: &mut App) {
         app.add_startup_system(setup_map);
-        //app.add_system(update_map);
+        app.add_startup_system_to_stage(StartupStage::PostStartup, update_map);
         app.add_system(make_rooms_selectable);
-        app.add_system(expand_selected_rooms);
+        //app.add_system(expand_selected_rooms);
     }
 
     fn setup_map(mut commands: Commands, mut random: ResMut<RandomDeterministic>) {
@@ -117,57 +121,59 @@ mod map_builder {
         mut random: ResMut<RandomDeterministic>,
         mut maps: Query<(&mut Map, &mut MapBuilder)>,
     ) {
-        if timer.duration() == Duration::default() {
+        /*if timer.duration() == Duration::default() {
             timer.set_duration(Duration::from_millis(50));
             timer.reset();
         }
         timer.tick(time.delta());
         if !timer.just_finished() {
             return;
-        }
+        }*/
         timer.reset();
-        for (mut map, mut builder) in maps.iter_mut() {
-            if map.0.len() >= 20 {
-                //continue;
-            }
-            for _ in 0..5 {
-                let mut filtered_rooms: Vec<(&RoomId, &Room<i32>)> = map
-                    .0
-                    .iter()
-                    .filter(|r| match builder.clutters.get(r.0) {
-                        Some(clutter) => clutter.nb_gen_tries <= 1,
-                        None => true,
-                    })
-                    .collect();
-                if filtered_rooms.is_empty() {
-                    builder.clutters.clear();
-                    filtered_rooms = map.0.iter().collect();
-                    dbg!("no safe room left");
+        for _ in 0..25 {
+            for (mut map, mut builder) in maps.iter_mut() {
+                if map.0.len() >= 20 {
+                    //continue;
                 }
-                if filtered_rooms.is_empty() {
-                    dbg!("no rooms left at all");
-                    map.0.create_raw(
-                        0,
-                        (
-                            random.random.gen_range(-1f32..=1f32) * 30f32,
-                            random.random.gen_range(-1f32..=1f32) * 30f32,
-                        ),
-                        vec![],
-                    );
-                    break;
-                }
-                let random_index = random.random.gen_range(0..filtered_rooms.len());
+                for _ in 0..5 {
+                    let mut filtered_rooms: Vec<(&RoomId, &Room<i32>)> = map
+                        .0
+                        .iter()
+                        .filter(|r| match builder.clutters.get(r.0) {
+                            Some(clutter) => clutter.nb_gen_tries <= 1,
+                            None => true,
+                        })
+                        .collect();
+                    if filtered_rooms.is_empty() {
+                        builder.clutters.clear();
+                        filtered_rooms = map.0.iter().collect();
+                        dbg!("no safe room left");
+                    }
+                    if filtered_rooms.is_empty() {
+                        dbg!("no rooms left at all");
+                        map.0.create_raw(
+                            0,
+                            (
+                                random.random.gen_range(-1f32..=1f32) * 30f32,
+                                random.random.gen_range(-1f32..=1f32) * 30f32,
+                            ),
+                            vec![],
+                        );
+                        break;
+                    }
+                    let random_index = random.random.gen_range(0..filtered_rooms.len());
 
-                let (from_room, _) = filtered_rooms[random_index];
-                let from_room = *from_room;
-                if map.0.add(from_room, 1, &mut random.random, 10).is_err() {
-                    builder
-                        .clutters
-                        .entry(from_room)
-                        .or_insert_with(RoomClutter::default)
-                        .nb_gen_tries += 1;
-                } else {
-                    break;
+                    let (from_room, _) = filtered_rooms[random_index];
+                    let from_room = *from_room;
+                    if map.0.add(from_room, 1, &mut random.random, 10).is_err() {
+                        builder
+                            .clutters
+                            .entry(from_room)
+                            .or_insert_with(RoomClutter::default)
+                            .nb_gen_tries += 1;
+                    } else {
+                        break;
+                    }
                 }
             }
         }

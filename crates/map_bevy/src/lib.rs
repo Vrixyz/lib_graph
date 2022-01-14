@@ -1,4 +1,4 @@
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::{ecs::component::TableStorage, prelude::*, sprite::MaterialMesh2dBundle};
 use map::{Room, RoomId};
 use shapes::*;
 
@@ -22,18 +22,27 @@ impl Plugin for MapPlugin {
     }
 }
 
-#[derive(Default, Component)]
+#[derive(Default)]
 pub struct Map(pub map::Map<i32>);
 
-#[derive(Default, Component)]
+impl Component for Map {
+    type Storage = TableStorage;
+}
+
+#[derive(Default)]
 pub struct DisplayMap {
     pub entities: Vec<Entity>,
     pub ids: Vec<RoomId>,
 }
+impl Component for DisplayMap {
+    type Storage = TableStorage;
+}
 
-#[derive(Component)]
 pub struct RoomEntity {
     pub room_id: map::RoomId,
+}
+impl Component for RoomEntity {
+    type Storage = TableStorage;
 }
 
 pub struct RoomGraphUpdate {
@@ -79,6 +88,7 @@ fn update_map_display(
                 .entity(entity)
                 .insert_bundle(graphic_update.mesh_bundle);
         }
+
         for r in to_remove {
             display.remove(r);
         }
