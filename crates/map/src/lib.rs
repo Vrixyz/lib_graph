@@ -4,7 +4,7 @@ use poisson::Poisson;
 use rand::Rng;
 use thiserror::Error;
 
-#[derive(PartialEq, Eq, Hash, Default, Clone, Copy, Debug)]
+#[derive(PartialOrd, PartialEq, Eq, Hash, Default, Clone, Copy, Debug)]
 pub struct RoomId(usize);
 
 #[derive(Debug)]
