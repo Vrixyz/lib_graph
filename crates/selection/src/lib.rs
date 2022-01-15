@@ -48,7 +48,9 @@ fn selection(
         if let Some(closest) = closest {
             for mut s in q_selectable.iter_mut() {
                 if s.2.is_selected {
-                    s.2.is_selected = false;
+                    if mouse_button_input.just_pressed(MouseButton::Left) {
+                        s.2.is_selected = false;
+                    }
                     s.2.is_hover = false;
                 }
             }

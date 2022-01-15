@@ -130,8 +130,17 @@ fn move_to_selected_rooms(
             if player.is_moving {
                 break;
             }
-            player.room_id = id.room_id;
-            player.is_moving = true;
+            if id.room_id == player.room_id {
+                break;
+            }
+            if let Ok(map) = maps.get_single() {
+                let current_room = &map.0.rooms[&player.room_id];
+                if !current_room.connections.contains(&id.room_id) {
+                    break;
+                }
+                player.room_id = id.room_id;
+                player.is_moving = true;
+            }
         }
     }
 }
