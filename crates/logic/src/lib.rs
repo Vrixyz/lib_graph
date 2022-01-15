@@ -10,7 +10,7 @@ use camera_pan::{CameraPan, CameraPanPlugin};
 use input::InputCamera;
 use map_bevy::{DisplayMap, Map, MapPlugin, RoomEntity};
 use map_builder::MapBuilder;
-use movement::MovementPlugin;
+use movement::{EventPlayersSpawn, MovementPlugin, Player, Unit};
 use rand::{thread_rng, Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use selection::{Selectable, SelectionPlugin};
@@ -35,6 +35,7 @@ impl Plugin for LogicPlugin {
 
         app.add_startup_system(setup_camera);
         //app.add_system(expand_selected_rooms);
+        app.add_system(move_to_selected_rooms);
         map_builder::setup(app);
     }
 }
@@ -61,7 +62,11 @@ impl Component for MainCamera {
     type Storage = TableStorage;
 }
 
-fn setup_camera(mut commands: Commands, mut camera_pan: ResMut<CameraPan>) {
+fn setup_camera(
+    mut commands: Commands,
+    mut camera_pan: ResMut<CameraPan>,
+    mut players_spawn_events: EventWriter<EventPlayersSpawn>,
+) {
     /*let cameraBundle = PerspectiveCameraBundle {
         transform: Transform::from_xyz(0.0, 0.0, -100.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..Default::default()
@@ -74,6 +79,7 @@ fn setup_camera(mut commands: Commands, mut camera_pan: ResMut<CameraPan>) {
         .insert(MainCamera)
         .id();
     camera_pan.camera = Some(entity);
+    players_spawn_events.send(EventPlayersSpawn);
 }
 
 fn destroy_selected_rooms(
@@ -109,6 +115,23 @@ fn expand_selected_rooms(
                     }
                 }
             }
+        }
+    }
+}
+fn move_to_selected_rooms(
+    mut commands: Commands,
+    q_selected_rooms: Query<(Entity, &RoomEntity, &Selectable), With<RoomEntity>>,
+    mut maps: Query<&mut Map>,
+    mut players: Query<&mut Unit, With<Player>>,
+) {
+    for (e, id, s) in q_selected_rooms.iter() {
+        if s.is_selected {
+            let mut player = players.single_mut();
+            if player.is_moving {
+                break;
+            }
+            player.room_id = id.room_id;
+            player.is_moving = true;
         }
     }
 }

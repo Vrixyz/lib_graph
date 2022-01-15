@@ -91,10 +91,8 @@ fn create_room(
         if filtered_rooms.is_empty() {
             builder.clutters.clear();
             filtered_rooms = map.0.iter().collect();
-            dbg!("no safe room left");
         }
         if filtered_rooms.is_empty() {
-            dbg!("no rooms left at all");
             map.0.create_raw(
                 0,
                 (
