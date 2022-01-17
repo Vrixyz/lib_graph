@@ -28,29 +28,19 @@ impl Plugin for MapPlugin {
     }
 }
 
-#[derive(Default)]
+#[derive(Component, Default)]
 pub struct Map(pub map::Map<i32>);
 
-impl Component for Map {
-    type Storage = TableStorage;
-}
-
-#[derive(Default)]
+#[derive(Component, Default)]
 pub struct DisplayMap {
     pub entities: Vec<Entity>,
     pub ids: Vec<RoomId>,
 }
-impl Component for DisplayMap {
-    type Storage = TableStorage;
-}
 
+#[derive(Component)]
 pub struct RoomEntity {
     pub room_id: map::RoomId,
 }
-impl Component for RoomEntity {
-    type Storage = TableStorage;
-}
-
 pub struct RoomGraphUpdate {
     pub mesh_bundle: MaterialMesh2dBundle<shapes::ColorMaterial>,
 }

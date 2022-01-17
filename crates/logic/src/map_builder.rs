@@ -12,12 +12,9 @@ use crate::RandomDeterministic;
 struct RoomClutter {
     pub nb_gen_tries: u8,
 }
-#[derive(Default)]
+#[derive(Default, Component)]
 pub struct MapBuilder {
     clutters: HashMap<RoomId, RoomClutter>,
-}
-impl Component for MapBuilder {
-    type Storage = TableStorage;
 }
 
 pub fn setup(app: &mut App) {

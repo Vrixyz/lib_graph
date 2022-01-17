@@ -1,5 +1,7 @@
 mod map_builder;
 mod movement;
+mod pickups;
+mod spawn_elements;
 
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
@@ -10,10 +12,12 @@ use camera_pan::{CameraPan, CameraPanPlugin};
 use input::InputCamera;
 use map_bevy::{DisplayMap, Map, MapPlugin, RoomEntity};
 use map_builder::MapBuilder;
-use movement::{EventPlayersSpawn, MovementPlugin, Player, Unit};
+use movement::{EventPlayersSpawn, MovementPlugin, Unit};
+use pickups::unit_pickup_on_move_finished;
 use rand::{thread_rng, Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use selection::{Selectable, SelectionPlugin};
+use spawn_elements::{spawn_elements, Player};
 
 pub fn run() {
     App::new().add_plugin(LogicPlugin).run();
@@ -36,6 +40,8 @@ impl Plugin for LogicPlugin {
         app.add_startup_system(setup_camera);
         //app.add_system(expand_selected_rooms);
         app.add_system(move_to_selected_rooms);
+        app.add_system(spawn_elements);
+        app.add_system(unit_pickup_on_move_finished);
         map_builder::setup(app);
     }
 }
@@ -56,11 +62,8 @@ impl Default for RandomDeterministic {
     }
 }
 
+#[derive(Component)]
 struct MainCamera;
-
-impl Component for MainCamera {
-    type Storage = TableStorage;
-}
 
 fn setup_camera(
     mut commands: Commands,
