@@ -29,7 +29,6 @@ pub fn setup(app: &mut App) {
 
 fn setup_map(mut commands: Commands, mut random: ResMut<RandomDeterministic>) {
     let mut map = Map::default();
-    let mut room_id = map.0.create_raw(0, (0f32, 0f32), vec![]);
 
     commands
         .spawn()
@@ -76,9 +75,6 @@ fn create_room(
     mut builder: &mut MapBuilder,
     random: &mut ResMut<RandomDeterministic>,
 ) {
-    if map.0.len() >= 20 {
-        //continue;
-    }
     for _ in 0..5 {
         let mut filtered_rooms: Vec<(&RoomId, &Room<i32>)> = map
             .0
@@ -109,7 +105,22 @@ fn create_room(
         let from_room = *from_room;
         match map.0.add(from_room, 1, &mut random.random, 10) {
             Ok(room_id) => {
-                // TODO: add connections to that room (excluding from_room because add() did it already)
+                let pos_new: Vec2 = map.0.rooms[&room_id].position.into();
+                let mut to_connect = vec![];
+                for other_room in map.0.iter() {
+                    if *other_room.0 == room_id {
+                        continue;
+                    }
+                    let pos_other: Vec2 = map.0.rooms[other_room.0].position.into();
+                    if pos_new.distance(pos_other) < 50f32 {
+                        to_connect.push((*other_room.0, room_id));
+                    }
+                }
+                for (id_1, id_2) in to_connect {
+                    map.0.connect(id_1, id_2);
+                    map.0.connect(id_2, id_1);
+                }
+                break;
             }
             Err(_) => {
                 builder

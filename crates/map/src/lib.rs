@@ -61,7 +61,7 @@ impl<T: Sized + std::fmt::Debug> Map<T> {
             .collect()
     }
 
-    fn connect(&mut self, from: RoomId, to: RoomId) -> Result<(), ErrorAdd> {
+    pub fn connect(&mut self, from: RoomId, to: RoomId) -> Result<(), ErrorAdd> {
         match self.rooms.entry(from) {
             std::collections::hash_map::Entry::Occupied(mut room) => {
                 room.get_mut().connections.push(to);

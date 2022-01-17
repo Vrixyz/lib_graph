@@ -60,6 +60,11 @@ fn create_ai_bundle(shapes: &Res<ShapeMeshes>, pos: (f32, f32)) -> UnitGraphics 
     UnitGraphics { mesh_bundle: mesh }
 }
 
+struct SpawnDef {
+    players: Vec<RoomId>,
+    points: Vec<RoomId>,
+}
+
 fn spawn_players(
     mut commands: Commands,
     shapes: Res<ShapeMeshes>,
@@ -70,20 +75,34 @@ fn spawn_players(
 ) {
     for my_event in events.iter() {
         let mut map = maps.single_mut();
-        if let Some(first) = map.0.iter().next() {
-            spawn_unit(
-                &rooms,
-                &mut commands,
-                first,
-                create_player_bundle(&shapes, first.1.position),
-                true,
-            );
-        }
+
+        let spawn_def = SpawnDef {
+            players: vec![
+                *map.0.iter().next().unwrap().0,
+                *map.0.iter().last().unwrap().0,
+            ],
+            points: vec![
+                *map.0.iter().nth(2).unwrap().0,
+                *map.0.iter().nth(3).unwrap().0,
+                *map.0.iter().nth(4).unwrap().0,
+                *map.0.iter().nth(5).unwrap().0,
+                *map.0.iter().nth(6).unwrap().0,
+            ],
+        };
+
+        let first = spawn_def.players[0];
+        spawn_unit(
+            &rooms,
+            &mut commands,
+            first,
+            create_player_bundle(&shapes, map.0.rooms[&first].position),
+            true,
+        );
         if let Some(last) = map.0.iter().last() {
             spawn_unit(
                 &rooms,
                 &mut commands,
-                last,
+                *spawn_def.players.iter().last().unwrap(),
                 create_ai_bundle(&shapes, last.1.position),
                 false,
             );
@@ -94,15 +113,15 @@ fn spawn_players(
 fn spawn_unit(
     rooms: &Query<(Entity, &RoomEntity)>,
     commands: &mut Commands,
-    first: (&RoomId, &map::Room<i32>),
+    room_id: RoomId,
     graphics: UnitGraphics,
     is_player: bool,
 ) {
-    if let Some(room) = rooms.iter().find(|(e, r)| r.room_id == *first.0) {
+    if let Some(room) = rooms.iter().find(|(e, r)| r.room_id == room_id) {
         let mut u = commands.spawn();
 
         u.insert(Unit {
-            room_id: *first.0,
+            room_id,
             is_moving: false,
         })
         .insert_bundle(graphics.mesh_bundle);
