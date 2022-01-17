@@ -96,6 +96,9 @@ fn update_map_display(
 
                 // Create new connection entities
                 for c in room.connections.iter() {
+                    // TODO: only add visible connections if id is from > to (to avoid duplicate connections)
+                    // TODO: later, handle one way connections
+
                     let target = map.0.rooms[c].position;
                     let connection_def = (c, id);
 
