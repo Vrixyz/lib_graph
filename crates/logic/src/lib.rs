@@ -18,7 +18,9 @@ use rand::{thread_rng, Rng, SeedableRng};
 use rand_chacha::ChaCha20Rng;
 use selection::{Selectable, SelectionPlugin};
 use spawn_elements::{spawn_elements, Player};
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
 pub fn run() {
     App::new().add_plugin(LogicPlugin).run();
 }

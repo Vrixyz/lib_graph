@@ -1,0 +1,14 @@
+[tasks.copy-assets]
+command = "cp"
+args = ["-R", "assets", "../web/public/logic/assets"]
+
+[tasks.compile-wasm]
+command = "wasm-pack"
+# args = ["build", "--release", "--target", "web", "-d", "../web/public/pkg"]
+args = ["build", "--target", "web", "-d", "../web/public/pkg"]
+
+[tasks.web]
+dependencies = [
+    "copy-assets",
+    "compile-wasm"
+]

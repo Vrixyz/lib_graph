@@ -19,6 +19,7 @@ map_bevy = { path = "../map_bevy" }
 map = { path = "../map" }
 selection = { path = "../selection" }
 shapes = { path = "../shapes" }
+wasm-bindgen = "0.2"
 
 [dependencies.bevy]
 version = "0.6"
