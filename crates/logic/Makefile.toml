@@ -1,6 +1,7 @@
 [tasks.copy-assets]
 script = '''
-mkdir -p ../web/public/logic/assets && cp -R assets/* ../web/public/assets/
+mkdir -p ../web/public/logic/assets
+cp -R assets/* ../web/public/assets/
 '''
 
 [tasks.compile-wasm]
