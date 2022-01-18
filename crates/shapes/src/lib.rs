@@ -134,7 +134,10 @@ impl RenderAsset for ColorMaterial {
 
 impl Material2d for ColorMaterial {
     fn fragment_shader(asset_server: &AssetServer) -> Option<Handle<Shader>> {
-        Some(asset_server.load("../../logic/assets/shaders/custom_material.wgsl"))
+        #[cfg(not(target_arch = "wasm32"))]
+        return Some(asset_server.load("../../logic/assets/shaders/custom_material.wgsl"));
+        #[cfg(target_arch = "wasm32")]
+        return Some(asset_server.load("assets/shaders/custom_material.wgsl"));
     }
 
     fn bind_group(render_asset: &<Self as RenderAsset>::PreparedAsset) -> &BindGroup {

@@ -1,6 +1,6 @@
 [tasks.copy-assets]
 script = '''
-mkdir -p ../web/public/logic/assets && cp -R assets/* ../web/public/logic/assets/
+mkdir -p ../web/public/logic/assets && cp -R assets/* ../web/public/assets/
 '''
 
 [tasks.compile-wasm]
@@ -8,7 +8,4 @@ command = "wasm-pack"
 args = ["build", "--release", "--target", "web", "-d", "../web/public/pkg"]
 
 [tasks.web]
-dependencies = [
-    "copy-assets",
-    "compile-wasm"
-]
+dependencies = ["copy-assets", "compile-wasm"]
