@@ -56,7 +56,7 @@ fn selection(
             }
             let mut to_select = q_selectable.get_mut(closest.0).unwrap();
             to_select.2.is_hover = !to_select.2.is_hover;
-            if mouse_button_input.just_pressed(MouseButton::Left) {
+            if mouse_button_input.just_released(MouseButton::Left) {
                 to_select.2.is_selected = !to_select.2.is_selected;
             }
         }
