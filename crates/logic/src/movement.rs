@@ -5,7 +5,7 @@ use map::RoomId;
 use map_bevy::{Map, RoomEntity};
 use shapes::ShapeMeshes;
 
-use crate::RandomDeterministic;
+use crate::in_game::RandomDeterministic;
 
 const PLAYER_SPEED: f32 = 60f32;
 
@@ -37,7 +37,11 @@ fn update_units_position(
     mut units: Query<(Entity, &mut Transform, &mut Unit)>,
     mut event_unit_finished_move: EventWriter<UnitFinishedMove>,
 ) {
-    let mut map = maps.single_mut();
+    let mut map = maps.get_single_mut();
+    if map.is_err() {
+        return;
+    }
+    let mut map = map.unwrap();
     for (e, mut t, mut u) in units.iter_mut() {
         if u.is_moving {
             let target = &map.0.rooms[&u.room_id];

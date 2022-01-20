@@ -3,9 +3,10 @@ use map::RoomId;
 use map_bevy::{Map, RoomEntity};
 use shapes::ShapeMeshes;
 
-use crate::{movement::Unit, pickups::Pickup, RandomDeterministic};
+use crate::GameState;
+use crate::{in_game::RandomDeterministic, movement::Unit, pickups::Pickup};
 
-use super::EventPlayersSpawn;
+use crate::movement::EventPlayersSpawn;
 
 #[derive(Component)]
 pub struct Player;
@@ -51,58 +52,80 @@ struct SpawnDef {
     players: Vec<RoomId>,
     points: Vec<RoomId>,
 }
+#[derive(Default)]
+pub struct SpawnCounter {
+    counter: i32,
+}
 
 pub fn spawn_elements(
     mut commands: Commands,
+    mut game_state: ResMut<State<GameState>>,
     shapes: Res<ShapeMeshes>,
     mut random: ResMut<RandomDeterministic>,
     mut maps: Query<&Map>,
     rooms: Query<(Entity, &RoomEntity)>,
     mut events: EventReader<EventPlayersSpawn>,
+    mut counter: Local<SpawnCounter>,
 ) {
-    for my_event in events.iter() {
-        let mut map = maps.single_mut();
+    if counter.counter == 0 && events.iter().next().is_some() {
+        // Delay 1 frame
+        counter.counter += 2;
+        return;
+    }
+    if counter.counter == 0 {
+        return;
+    }
+    counter.counter = 0;
+    let mut map = maps.get_single_mut();
 
-        let spawn_def = SpawnDef {
-            players: vec![
-                *map.0.iter().next().unwrap().0,
-                *map.0.iter().nth(2).unwrap().0,
-                *map.0.iter().last().unwrap().0,
-            ],
-            points: vec![
-                *map.0.iter().nth(3).unwrap().0,
-                *map.0.iter().nth(4).unwrap().0,
-                *map.0.iter().nth(5).unwrap().0,
-                *map.0.iter().nth(6).unwrap().0,
-            ],
-        };
+    if map.is_err() {
+        return;
+    }
+    let mut map = map.unwrap();
+    if map.0.is_empty() {
+        return;
+    }
+    game_state.set(GameState::Playing);
+    dbg!("spawning");
+    let spawn_def = SpawnDef {
+        players: vec![
+            *map.0.iter().next().unwrap().0,
+            *map.0.iter().nth(2).unwrap().0,
+            *map.0.iter().last().unwrap().0,
+        ],
+        points: vec![
+            *map.0.iter().nth(3).unwrap().0,
+            *map.0.iter().nth(4).unwrap().0,
+            *map.0.iter().nth(5).unwrap().0,
+            *map.0.iter().nth(6).unwrap().0,
+        ],
+    };
 
-        spawn_def.players.iter().enumerate().for_each(|(i, r)| {
-            if let Some(room) = map.0.rooms.get(&r) {
-                let is_player = i == 0;
+    spawn_def.players.iter().enumerate().for_each(|(i, r)| {
+        if let Some(room) = map.0.rooms.get(&r) {
+            let is_player = i == 0;
 
-                spawn_unit(
-                    &rooms,
-                    &mut commands,
-                    *r,
-                    if is_player {
-                        create_player_bundle(&shapes, room.position)
-                    } else {
-                        create_ai_bundle(&shapes, room.position)
-                    },
-                    is_player,
-                );
-            }
-        });
-        for p in spawn_def.points {
-            if let Some(room) = map.0.rooms.get(&p) {
-                spawn_pickup(
-                    &rooms,
-                    &mut commands,
-                    p,
-                    create_point_bundle(&shapes, room.position),
-                );
-            }
+            spawn_unit(
+                &rooms,
+                &mut commands,
+                *r,
+                if is_player {
+                    create_player_bundle(&shapes, room.position)
+                } else {
+                    create_ai_bundle(&shapes, room.position)
+                },
+                is_player,
+            );
+        }
+    });
+    for p in spawn_def.points {
+        if let Some(room) = map.0.rooms.get(&p) {
+            spawn_pickup(
+                &rooms,
+                &mut commands,
+                p,
+                create_point_bundle(&shapes, room.position),
+            );
         }
     }
 }

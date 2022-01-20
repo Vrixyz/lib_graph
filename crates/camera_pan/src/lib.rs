@@ -122,9 +122,10 @@ mod systems {
         }
         if let Some(offset) = offset {
             // FIXME: Scale is very ugly: zooming out messes up with cursor movement, and we can't zoom in.
-            let mut orthographic_projection = query.get_mut(camera_pan.camera.unwrap()).unwrap();
-            orthographic_projection.scale += offset;
-            orthographic_projection.scale = f32::max(orthographic_projection.scale, 0.1f32);
+            if let Ok(mut orthographic_projection) = query.get_mut(camera_pan.camera.unwrap()) {
+                orthographic_projection.scale += offset;
+                orthographic_projection.scale = f32::max(orthographic_projection.scale, 0.1f32);
+            }
         }
     }
 }

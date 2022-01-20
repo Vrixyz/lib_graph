@@ -6,7 +6,11 @@ use map_bevy::{DisplayMap, Map, RoomEntity};
 use rand::Rng;
 use selection::Selectable;
 
-use crate::RandomDeterministic;
+use crate::{
+    in_game::{self, RandomDeterministic},
+    movement::EventPlayersSpawn,
+    GameState,
+};
 
 #[derive(Default)]
 struct RoomClutter {
@@ -18,13 +22,20 @@ pub struct MapBuilder {
 }
 
 pub fn setup(app: &mut App) {
-    app.add_startup_system(setup_map);
-    app.add_startup_system_to_stage(StartupStage::PostStartup, create_level);
+    app.add_system(setup_map);
+    app.add_system(create_level);
     //app.add_system(update_map);
     app.add_system(make_rooms_selectable);
 }
 
-fn setup_map(mut commands: Commands, mut random: ResMut<RandomDeterministic>) {
+fn setup_map(
+    mut commands: Commands,
+    mut game_state: ResMut<State<GameState>>,
+    mut random: ResMut<in_game::RandomDeterministic>,
+) {
+    if game_state.current() != &GameState::LoadingMapSetup {
+        return;
+    }
     let mut map = Map::default();
 
     commands
@@ -32,25 +43,34 @@ fn setup_map(mut commands: Commands, mut random: ResMut<RandomDeterministic>) {
         .insert(DisplayMap::default())
         .insert(MapBuilder::default())
         .insert(map);
+    game_state.set(dbg!(GameState::LoadingMapRooms));
 }
 
 fn create_level(
     mut commands: Commands,
-    mut random: ResMut<RandomDeterministic>,
+    mut game_state: ResMut<State<GameState>>,
+    mut random: ResMut<in_game::RandomDeterministic>,
     mut maps: Query<(&mut Map, &mut MapBuilder)>,
+    mut players_spawn_events: EventWriter<EventPlayersSpawn>,
 ) {
+    if game_state.current() != &GameState::LoadingMapRooms {
+        return;
+    }
     for (mut map, mut builder) in maps.iter_mut() {
+        dbg!("create level");
         for _ in 0..25 {
             create_room(map.as_mut(), builder.as_mut(), &mut random);
         }
     }
+    players_spawn_events.send(EventPlayersSpawn);
+    game_state.set(dbg!(GameState::LoadingSpawns));
 }
 
 fn update_map(
     mut commands: Commands,
     mut timer: Local<Timer>,
     time: Res<Time>,
-    mut random: ResMut<RandomDeterministic>,
+    mut random: ResMut<in_game::RandomDeterministic>,
     mut maps: Query<(&mut Map, &mut MapBuilder)>,
 ) {
     if timer.duration() == Duration::default() {
