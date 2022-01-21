@@ -1,8 +1,10 @@
+mod ai;
 mod map_builder;
 mod movement;
 mod pickups;
 mod spawn_elements;
 
+use ai::AIPlugin;
 use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     ecs::component::TableStorage,
@@ -48,6 +50,7 @@ impl Plugin for LogicPlugin {
         app.add_plugin(CameraPanPlugin);
         app.add_plugin(SelectionPlugin);
         app.add_plugin(MovementPlugin);
+        app.add_plugin(AIPlugin);
         app.add_state(GameState::LoadingBasic);
 
         app.insert_resource(in_game::RandomDeterministic::default());
@@ -110,7 +113,7 @@ pub mod in_game {
             return;
         }
         let mut cameraBundle = OrthographicCameraBundle::new_2d();
-        cameraBundle.orthographic_projection.scale = 0.3;
+        cameraBundle.orthographic_projection.scale = 0.55;
         let entity = commands
             .spawn_bundle(cameraBundle)
             .insert(InputCamera)
@@ -182,10 +185,12 @@ pub mod in_game {
         for (e, id, s) in q_selected_rooms.iter() {
             if s.is_selected {
                 let mut player = players.single_mut();
-                if player.is_moving {
+                if let Some(moving_to) = player.moving_to {
+                    if id.room_id == player.room_id {
+                        player.moving_to = Some(id.room_id);
+                    }
                     break;
-                }
-                if id.room_id == player.room_id {
+                } else if id.room_id == player.room_id {
                     break;
                 }
                 if let Ok(map) = maps.get_single() {
@@ -193,8 +198,7 @@ pub mod in_game {
                     if !current_room.connections.contains(&id.room_id) {
                         break;
                     }
-                    player.room_id = id.room_id;
-                    player.is_moving = true;
+                    player.moving_to = Some(id.room_id);
                 }
             }
         }

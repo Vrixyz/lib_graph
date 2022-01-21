@@ -28,7 +28,7 @@ pub struct UnitFinishedMove {
 #[derive(Component)]
 pub struct Unit {
     pub room_id: RoomId,
-    pub is_moving: bool,
+    pub moving_to: Option<RoomId>,
 }
 
 fn update_units_position(
@@ -43,8 +43,8 @@ fn update_units_position(
     }
     let mut map = map.unwrap();
     for (e, mut t, mut u) in units.iter_mut() {
-        if u.is_moving {
-            let target = &map.0.rooms[&u.room_id];
+        if let Some(moving_to) = u.moving_to {
+            let target = &map.0.rooms[&moving_to];
             let target: Vec2 = target.position.into();
             let to_target: Vec2 = target - t.translation.xy();
             let actual_move = to_target
@@ -53,7 +53,8 @@ fn update_units_position(
             t.translation += actual_move;
 
             if t.translation.xy() == target {
-                u.is_moving = false;
+                u.room_id = moving_to;
+                u.moving_to = None;
                 event_unit_finished_move.send(UnitFinishedMove {
                     entity: e,
                     arrived_at: u.room_id,

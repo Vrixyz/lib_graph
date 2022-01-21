@@ -60,9 +60,12 @@ mod systems {
         if mouse_button_input.pressed(MouseButton::Left) {
             if let Some(offset) = mouse_motion.iter().last() {
                 if camera_pan.camera.is_some() {
-                    let mut camera = query
-                        .get_component_mut::<Transform>(camera_pan.camera.unwrap())
-                        .unwrap();
+                    let mut camera =
+                        query.get_component_mut::<Transform>(camera_pan.camera.unwrap());
+                    if camera.is_err() {
+                        return;
+                    }
+                    let mut camera = camera.unwrap();
                     camera_pan.prepan_offset -= Vec3::new(offset.delta.x, -offset.delta.y, 0.0);
                     if camera_pan.prepan_offset.length() > 10f32 {
                         camera_pan.state = PanState::Panning;
@@ -86,8 +89,12 @@ mod systems {
         if mouse_button_input.pressed(MouseButton::Left) {
             for offset in mouse_motion.iter() {
                 if camera_pan.camera.is_some() {
-                    let (mut camera, orthographic_projection) =
-                        query.get_mut(camera_pan.camera.unwrap()).unwrap();
+                    let res = query.get_mut(camera_pan.camera.unwrap());
+                    if res.is_err() {
+                        camera_pan.state = PanState::NotPanning;
+                        return;
+                    }
+                    let (mut camera, orthographic_projection) = res.unwrap();
                     let offset = Vec3::new(
                         offset.delta.x * orthographic_projection.scale,
                         -offset.delta.y * orthographic_projection.scale,

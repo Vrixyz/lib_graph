@@ -3,6 +3,7 @@ use map::RoomId;
 use map_bevy::{Map, RoomEntity};
 use shapes::ShapeMeshes;
 
+use crate::ai::Ai;
 use crate::GameState;
 use crate::{in_game::RandomDeterministic, movement::Unit, pickups::Pickup};
 
@@ -28,6 +29,7 @@ fn create_player_bundle(shapes: &Res<ShapeMeshes>, pos: (f32, f32)) -> UnitGraph
 fn create_ai_bundle(shapes: &Res<ShapeMeshes>, pos: (f32, f32)) -> UnitGraphics {
     let mut transform = Transform::from_xyz(pos.0, pos.1, 15.0);
     transform.scale = Vec3::ONE * 7.5;
+
     let mesh = MaterialMesh2dBundle {
         mesh: shapes.quad2x2.clone().into(),
         material: shapes.mat_gray.clone(),
@@ -142,11 +144,13 @@ fn spawn_unit(
 
         u.insert(Unit {
             room_id,
-            is_moving: false,
+            moving_to: None,
         })
         .insert_bundle(graphics.mesh_bundle);
         if is_player {
             u.insert(Player);
+        } else {
+            u.insert(Ai);
         }
     }
 }
